@@ -6,4 +6,6 @@
 4.回调时回传标准形参，如dirEntry、fileEntry、FileError等，除构造函数外正常与异常使用一个回调接口。<br>
 5.回调函数上下文已绑定为FileSystem实例。
 #### 引入：
-script type="text/javascript" src="filesystem.js"></script> //html
+```html
+<script src="filesystem.js"></script>
+```
