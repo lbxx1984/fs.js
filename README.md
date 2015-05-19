@@ -20,8 +20,8 @@ var fs = new FileSystem({
 });
 ```
 ### 目录操作：
-#### 创建目录
-只创建一层，不递归创建，即dir1/dir2/dir3，如果dir2不存在，则将错误通过callback返回<br>
+#### md，创建目录
+创建目录，只创建一层，不递归创建，即dir1/dir2/dir3，如果dir2不存在，则将错误通过callback返回<br>
 ```javascript
 fs.md(dir, callback);
 ```
@@ -29,3 +29,45 @@ fs.md(dir, callback);
 -------------|--------------|-------------
 dir|string 目录名称
 callback|Function|创建成功，回传dirEntry对象； 创建失败，回传FileError对象(后略)
+
+#### cd，获取目录
+获取目录操作接口，若不存在抛错<br>
+```javascript
+fs.cd(dir, callback);
+```
+参数|类型|说明
+-------------|--------------|-------------
+dir|string 目录名称
+callback|Function|回传dirEntry对象
+
+#### deltree，删除目录
+若目录中含有文件或其他目录，则递归删除
+```javascript
+fs.deltree(dir, callback);
+```
+参数|类型|说明
+-------------|--------------|-------------
+dir|string 目录名称
+callback|Function|回传dirEntry对象
+
+#### rd，删除空目录
+若目录中含有文件或其他目录，则抛错
+```javascript
+fs.rd(dir, callback);
+```
+参数|类型|说明
+-------------|--------------|-------------
+dir|string 目录名称
+callback|Function|回传dirEntry对象
+
+#### dir，获取目录列表
+将给定目录的内部结构读出来，只读一层。若目录中含有文件或其他目录，则抛错
+```javascript
+fs.dir(dir, callback);
+```
+参数|类型|说明
+-------------|--------------|-------------
+dir|string 目录路径，如果为''或null或undefined，则读根目录
+callback|Function|回传目录中的entries
+
+### 文件操作：
