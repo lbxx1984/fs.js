@@ -9,3 +9,13 @@
 ```html
 <script src="filesystem.js"></script>
 ```
+#### 声明：
+```javascript
+var fs = new FileSystem({
+    type: window.TEMPORARY, // 空间类型：window.TEMPORARY、window.PERSISTENT
+    size: 1024 * 1024 * 100, // 空间大小：单位B
+    debug: true, // 是否在控制台输出调试信息
+    onSuccess: function (fs) {}, // 成功回调，形参为fs对象
+    onFail: function (evt) {} // 失败回调，形参为FileError对象
+});
+```
