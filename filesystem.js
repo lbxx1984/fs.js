@@ -64,7 +64,7 @@ define(function (require) {
         // 调试信息
         _msg: {
             'unsupport': 'Your browser don\'t support! Please use Chrome.',
-            'TypeMismatchError': 'Can\'t delete a file. Please use rd.',
+            'TypeMismatchError': 'Can\'t mismatch type.',
             'InvalidModificationError': 'The directory is not empty.',
             'CallbackType': 'Callback must be a function.',
             'BeBlob': 'Param.data must be a blob!'
