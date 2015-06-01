@@ -52,8 +52,7 @@ define(function (require) {
             malloc(param.type, param.size, success, fail);
         }
         else if (param.hasOwnProperty('onFail') && typeof param.onFail === 'function') {
-            var msg = 'Your browser don\'t support! Please use Chrome.';
-            param.onFail.call(_this, _this._fileError(msg));
+            param.onFail.call(_this, _this._fileError(_this._msg['unsupport']));
         }
     }
 
@@ -62,6 +61,14 @@ define(function (require) {
      * 原型定义
      */
     FileSystem.prototype = {
+        // 调试信息
+        _msg: {
+            'unsupport': 'Your browser don\'t support! Please use Chrome.',
+            'TypeMismatchError': 'Can\'t delete a file. Please use rd.',
+            'InvalidModificationError': 'The directory is not empty.',
+            'CallbackType': 'Callback must be a function.',
+            'BeBlob': 'Param.data must be a blob!'
+        },
         // 文件系统操作句柄
         _fs: null,
         // 调试标记
@@ -72,11 +79,15 @@ define(function (require) {
                 if (evt === undefined) {
                     evt = {};
                 }
+                // console.log(evt);
+                if (evt instanceof FileError && _this._msg[evt.name]) {
+                    evt = _this._fileError(_this._msg[evt.name]);
+                }
                 if (evt instanceof FileError || evt.error) {
                     _this._errorHandler(evt);
                 }
                 if (typeof callback !== 'function') {
-                    _this._errorHandler(_this._fileError('callback must be a function.'));
+                    _this._errorHandler(_this._fileError(_this._msg['CallbackType']));
                     return;
                 }
                 callback.call(_this, evt);
@@ -374,7 +385,7 @@ define(function (require) {
         var _this = this;
         var result = this._resultHandler(this, callback);
         if (typeof param !== 'object' || !(param.data instanceof Blob)) {
-            result(_this._fileError('param.data must be a blob!'));
+            result(_this._fileError(_this._msg['BeBlob']));
             return;
         }
         var toDo = param.append ? gotFile : toDel;
