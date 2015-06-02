@@ -64,8 +64,6 @@ define(function (require) {
         // 调试信息
         _msg: {
             'unsupport': 'Your browser don\'t support! Please use Chrome.',
-            'TypeMismatchError': 'Can\'t mismatch type.',
-            'InvalidModificationError': 'The directory is not empty.',
             'CallbackType': 'Callback must be a function.',
             'BeBlob': 'Param.data must be a blob!'
         },
@@ -78,10 +76,6 @@ define(function (require) {
             return function (evt) {
                 if (evt === undefined) {
                     evt = {};
-                }
-                // console.log(evt);
-                if (evt instanceof FileError && _this._msg[evt.name]) {
-                    evt = _this._fileError(_this._msg[evt.name]);
                 }
                 if (evt instanceof FileError || evt.error) {
                     _this._errorHandler(evt);
@@ -99,7 +93,7 @@ define(function (require) {
                 return;
             }
             /*ignore*/
-            console.log(evt.name + ': ' + evt.message);
+            console.log(evt.message || evt.name);
         },
         // 封装错误并返回FileError对象
         _fileError: function (str) {
