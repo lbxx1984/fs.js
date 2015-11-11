@@ -2,81 +2,9 @@
 define(function (require) {
 
 
-    /*目录操作接口*/
-
-    /**
-     * 删除目录及其内部所有内容
-     * @param {string} dir 目录路径
-     * @param {Function} callback 回调
-     */
-    FileSystem.prototype.deltree = function (dir, callback) {
-        if (this._fs == null) {
-            return;
-        }
-        var result = this._resultHandler(this, callback);
-
-        this._fs.root.getDirectory(
-            dir, {},
-            function (dirEntry) {
-                dirEntry.removeRecursively(result, result);
-            },
-            result
-        );
-    };
-    /**
-     * 删除目录
-     * 只删除空目录
-     * @param {string} dir 目录路径
-     * @param {Function} callback 回调
-     */
-    FileSystem.prototype.rd = function (dir, callback) {
-        if (this._fs == null) {
-            return;
-        }
-        var result = this._resultHandler(this, callback);
-
-        this._fs.root.getDirectory(
-            dir, {},
-            function (dirEntry) {
-                dirEntry.remove(result, result);
-            },
-            result
-        );
-    };
-
-
-
-
-
     /*文件操作接口*/
-    /**
-     * 创建文件
-     * 如果存在同名文件则抛错
-     * @param {string} filename 完成文件名
-     * @param {Function} callback 回调函数
-     */
-    FileSystem.prototype.create = function (filename, callback) {
-        if (this._fs == null) {
-            return;
-        }
-        var result = this._resultHandler(this, callback);
 
-        this._fs.root.getFile(filename, {create: true, exclusive: true}, result, result);
-    };
-    /**
-     * 打开文件
-     * 如果文件不存在则抛错
-     * @param {string} filename 完成文件名
-     * @param {Function} callback 回调函数
-     */
-    FileSystem.prototype.open = function (filename, callback) {
-        if (this._fs == null) {
-            return;
-        }
-        var result = this._resultHandler(this, callback);
-
-        this._fs.root.getFile(filename, {create: false}, result, result);
-    };
+ 
     /**
      * 删除文件
      * 如果文件不存在则抛错

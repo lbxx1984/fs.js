@@ -2,10 +2,15 @@ require(['FileSystem'], function (FileSystem) {
     var fs = FileSystem({}, done);
 
     function done() {
+        console.log(fs);
+        // fs.cd('abc/456', function () {
+        //     fs.open('xyz.txt', outputFileList);
+        // });
         outputFileList();
     }
 
-    function outputFileList() {
+    function outputFileList(e) {
+        console.log(e);
         var reading = ['/'];
         var result = {};
         readDir();
@@ -38,8 +43,9 @@ require(['FileSystem'], function (FileSystem) {
                 var html = [];
                 for (var i = 0; i < arr.length; i++) {
                     var level = arr[i].split('/').length;
-                    html.push(produceTab(level - 2) + arr[i]);
-                    if (result[arr[i]]) {
+                    var isDir = result.hasOwnProperty(arr[i])
+                    html.push(produceTab(level - 2) + arr[i] + '&nbsp;[' + (isDir ? 'DIR' : 'FILE') + ']');
+                    if (isDir) {
                         html = html.concat(readChildren(arr[i]));
                     }
                 }

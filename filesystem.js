@@ -72,6 +72,10 @@
 
     /**
      * 内部工具，包装callback回调
+     *
+     * @param {Object} me fs对象实例
+     * @param {Function} callback 待封包的函数
+     * @return {Function} 封号包的函数
      */
     function bind(me, callback) {
         callback = typeof callback === 'function' ? callback : function () {};
@@ -83,32 +87,60 @@
 
 
     /**
+     * 内部工具，扩展fs对象实例API
+     *
+     * @param {Object} me fs对象实例
+     * @param {Object} fs 文件操作句柄
+     */
+    function extend(me, fs) {
+        var currentDirectory = fs.root;
+
+        /**
+         * 创建目录，不递归创建
+         *
+         * @param {string} dir 相对路径
+         * @param {Function} callback 回调函数，创建成功，回传dirEntry
+         */
+        me.md = function (dir, callback) {
+            callback = bind(this, callback);
+            fs.root.getDirectory(joinPath(currentDirectory.fullPath, dir), {create: true}, callback, callback);
+        };
+
+        /**
+         * 读取当前目录
+         *
+         * @param {Function} callback 回调函数
+         * @param {?string} dir 相对路径
+         */
+        me.dir = function (callback, dir) {
+            callback = bind(this, callback);
+            fs.root.getDirectory(joinPath(currentDirectory.fullPath, dir), {}, success, callback);
+            function success(dirEntry) {
+                var reader = dirEntry.createReader();
+                reader.readEntries(callback, callback);
+            }
+        };
+    }
+
+
+    /**
      * 构造函数
      *
      * @constructor
-     * @param {Object} param配置信息
-     * @param {number} param.size 空间大小：字节。
-     * @param {boolean} param.debug 是否输出debug信息
      * @param {Function} callback 回调
+     * @param {Object} param配置信息
+     * @param {number} param.size 空间大小：字节
      */
     function FileSystem(callback, param) {
 
         if (!(this instanceof FileSystem)) {
             return new FileSystem(param, callback);
         }
-        var me = this;
-        var callback = typeof callback === 'function' ? callback : function () {};
-        var malloc = window.requestFileSystem || window.webkitRequestFileSystem;
-
         param = param || {};
         var size = (~~param.size) || 1024 * 1024 * 100; // 100MB
-        
-        // 调试输出方法
-        this.debug = param.debug ? function () {} : function (str, type) {log(str, type);}
-        // 当前所在目录，初始为root
-        this.currentDirectory = null;
-        // 文件操作句柄
-        this.fs = null;
+        var callback = typeof callback === 'function' ? callback : function () {};
+        var malloc = window.requestFileSystem || window.webkitRequestFileSystem;
+        var me = this;
         
         // 分配空间，申请文件操作句柄
         if (typeof malloc === 'function') {
@@ -120,13 +152,12 @@
         
         // 回调处理事件
         function success(fs) {
-            me.debug('FileSystem ' + me.version);
-            me.fs = fs;
-            me.currentDirectory = fs.root;
+            log('FileSystem ' + me.version);
+            extend(me, fs);
             callback(me);
         }
         function fail() {
-            me.debug('Your browser don\'t support!', me, 'warn');
+            log('Your browser don\'t support!', 'warn');
             callback();
         }
     }
@@ -135,70 +166,107 @@
     FileSystem.prototype.version = '0.0.1';
 
 
-    /**
-     * 创建目录
-     * 只创建一层，不递归创建，即dir1/dir2/dir3，如果dir2不存在，则将错误通过callback返回
-     *
-     * @param {string} name 目录名称
-     * @param {Function} callback 回调函数，创建成功，回传dirEntry
-     * @param {?string} dir 相对路径
-     */
-    FileSystem.prototype.md = function (name, callback, dir) {
-        name = typeof name === 'string' ? name : '';
-        if (name === '' || this.fs == null) {
-            return;
-        }
-        callback = bind(this, callback);
-        var path = joinPath(this.currentDirectory.fullPath, dir) + '/' + name;
-        this.fs.root.getDirectory(path, {create: true}, callback, callback);
-    };
+    
 
 
-    /**
-     * 切换当前目录
-     *
-     * @param {string} dir 相对路径
-     * @param {Function} callback 回调函数
-     */
-    FileSystem.prototype.cd = function (dir, callback) {
-        if (this.fs == null) {
-            return;
-        }
-        callback = bind(this, callback);
-        var path = joinPath(this.currentDirectory.fullPath, dir);
-        var me = this;
-        me.fs.root.getDirectory(dir, {}, success, fail);
-        function success(evt) {
-            me.currentDirectory = evt;
-            callback(evt);
-        }
-        function fail(evt) {
-            callback(evt);
-        }
-    };
+    // /**
+    //  * 切换当前目录
+    //  *
+    //  * @param {string} dir 相对路径
+    //  * @param {Function} callback 回调函数
+    //  */
+    // FileSystem.prototype.cd = function (dir, callback) {
+    //     if (this.fs == null) {
+    //         return;
+    //     }
+    //     callback = bind(this, callback);
+    //     var path = joinPath(this.currentDirectory.fullPath, dir);
+    //     var me = this;
+    //     me.fs.root.getDirectory(dir, {}, success, fail);
+    //     function success(evt) {
+    //         me.currentDirectory = evt;
+    //         callback(evt);
+    //     }
+    //     function fail(evt) {
+    //         callback(evt);
+    //     }
+    // };
 
 
-    /**
-     * 读取当前目录
-     *
-     * @param {Function} callback 回调函数
-     * @param {string} dir 相对路径
-     */
-    FileSystem.prototype.dir = function (callback, dir) {
-        if (this.fs == null) {
-            return;
-        }
-        callback = bind(this, callback);
-        var path = joinPath(this.currentDirectory.fullPath, dir);
-        this.fs.root.getDirectory(path, {}, success, fail);
-        function success(dirEntry) {
-            var reader = dirEntry.createReader();
-            reader.readEntries(callback, callback);
-        }
-        function fail(evt) {
-            callback(evt);
-        }
-    };
+    
+
+
+    // *
+    //  * 删除目录
+    //  * 只删除空目录
+    //  *
+    //  * @param {string} dir 相对路径
+    //  * @param {Function} callback 回调
+     
+    // FileSystem.prototype.rd = function (dir, callback) {
+    //     if (this.fs == null) {
+    //         return;
+    //     }
+    //     callback = bind(this, callback);
+    //     var path = joinPath(this.currentDirectory.fullPath, dir);
+    //     this.fs.root.getDirectory(path, {}, gotDirectory, callback);
+    //     function gotDirectory(dirEntry) {
+    //         dirEntry.remove(callback, callback);
+    //     }
+    // };
+
+
+    // /**
+    //  * 删除目录及其内部所有内容
+    //  *
+    //  * @param {string} dir 相对路径
+    //  * @param {Function} callback 回调
+    //  */
+    // FileSystem.prototype.deltree = function (dir, callback) {
+    //     if (this.fs == null) {
+    //         return;
+    //     }
+    //     callback = bind(this, callback);
+    //     var path = joinPath(this.currentDirectory.fullPath, dir);
+    //     this.fs.root.getDirectory(path, {}, gotDirectory, callback);
+    //     function gotDirectory(dirEntry) {
+    //         dirEntry.removeRecursively(callback, callback);
+    //     }
+    // };
+
+
+    // /**
+    //  * 创建文件
+    //  * 如果存在同名文件则抛错
+    //  *
+    //  * @param {string} filename 文件名（可含相对路径）
+    //  * @param {Function} callback 回调函数
+    //  */
+    // FileSystem.prototype.create = function (filename, callback) {
+    //     if (this.fs == null) {
+    //         return;
+    //     }
+    //     callback = bind(this, callback);
+    //     var file = joinPath(this.currentDirectory.fullPath, filename);
+    //     this.fs.root.getFile(file, {create: true, exclusive: true}, callback, callback);
+    // };
+
+
+    // /**
+    //  * 打开文件
+    //  * 如果文件不存在则抛错
+    //  *
+    //  * @param {string} filename 完成文件名
+    //  * @param {Function} callback 回调函数
+    //  */
+    // FileSystem.prototype.open = function (filename, callback) {
+    //     if (this.fs == null) {
+    //         return;
+    //     }
+    //     callback = bind(this, callback);
+    //     var file = joinPath(this.currentDirectory.fullPath, filename);
+    //     this.fs.root.getFile(file, {create: false}, callback, callback);
+    // };
 
 
 })(window);
