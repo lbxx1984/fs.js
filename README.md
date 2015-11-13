@@ -1,173 +1,164 @@
-## filesystem.js
-### 说明：
-1.这是一个html5沙箱文件操作类，对requestFileSystem重新封装，令H5文件操作更便捷。<br>
-2.所有API使用异步回调，建议与Promise结合使用。<br>
-3.所有API含义与MS-DOS命令相同。<br>
-4.回调时回传标准形参，如dirEntry、fileEntry、FileError，除构造函数正常异常使用同一回调。<br>
-5.回调函数上下文已绑定为FileSystem实例。
-### 引入：
+##H5FS
+
+* H5FS is a library for HTML5 sandbox files operating in Browser.
+* All H5FS APIs are asynchronous, it will be very efficient with the use of Promise. 
+* All H5FS APIs have the same meaning as MS-DOS (e.g. cd, md, del).
+* H5FS maintains a working directory inside for each instance, use 'cd' to change it.
+* H5FS supports relative path like '/', './', '../' .
+* The context of callback function will be binded to the instance of constructor.
+
+##How to use
+
+* Clone a copy of the main git repo by running:
+```bash
+    git clone git://github.com/lbxx1984/H5FS.git
+```
+
+* Import FileSystem.js to your project:
 ```html
-<script src="filesystem.js"></script>
+    <script type="text/javascript" src="FileSystem.js"></script>
 ```
-### 声明：
+or:
 ```javascript
-var fs = new FileSystem({
-    type: window.TEMPORARY, // 空间类型：window.TEMPORARY、window.PERSISTENT
-    size: 1024 * 1024 * 100, // 空间大小：单位B
-    debug: true, // 是否在控制台输出调试信息
-    onSuccess: function (fs) {}, // 成功回调，形参为fs对象
-    onFail: function (evt) {} // 失败回调，形参为FileError对象
-});
+    define(function (require) {
+        var FileSystem = require('FileSystem');
+    });
 ```
-<hr>
-### 目录接口：
-#### md，创建目录
-创建目录，只创建一层，不递归创建，即dir1/dir2/dir3，如果dir2不存在，则将错误通过callback返回
-```javascript
-fs.md(dir, callback);
-```
-参数|类型|说明
--------------|--------------|-------------
-dir|string|目录名称
-callback|Function|创建成功，回传dirEntry对象； 创建失败，回传FileError对象(后略)
 
-#### cd，获取目录
-获取目录操作接口，若不存在抛错<br>
+* Create H5FS instances like:
 ```javascript
-fs.cd(dir, callback);
+    var fs = new FileSystem(callback);
+    function callback(fs1) {
+        console.log(fs1);
+        console.log(fs1 === fs);
+    }
 ```
-参数|类型|说明
--------------|--------------|-------------
-dir|string|目录名称
-callback|Function|回传dirEntry对象
+* See more examples by accessing ./index.html or checking ./demo.js directly.
 
-#### deltree，删除目录
-若目录中含有文件或其他目录，则递归删除
-```javascript
-fs.deltree(dir, callback);
-```
-参数|类型|说明
--------------|--------------|-------------
-dir|string|目录名称
-callback|Function|回传dirEntry对象
+##Docs
 
-#### rd，删除空目录
-若目录中含有文件或其他目录，则抛错
-```javascript
-fs.rd(dir, callback);
+#### Constructor
+* new FileSystem(callback, param)
 ```
-参数|类型|说明
--------------|--------------|-------------
-dir|string|目录名称
-callback|Function|回传dirEntry对象
+    @param {?Object} param, params for initialization
+    @param {?number} param.size, disk space (B)
+    @callback(FileSystem) create successfully
+    @callback(null) create unsuccesslly
+```
 
-#### dir，获取目录列表
-将给定目录的内部结构读出来，只读一层。
-```javascript
-fs.dir(dir, callback);
+#### Directory Operating APIs
+* .dir(callback, dir)
 ```
-参数|类型|说明
--------------|--------------|-------------
-dir|string|目录路径，如果为''或null或undefined，则读根目录
-callback|Function|回传entries数组
-<hr>
-### 文件接口：
-#### create，创建空白文件
-创建文件，如果存在同名文件则抛错
-```javascript
-fs.create(filename, callback);
+    Read working directory or specified directory
+    @param {?string} dir, specified directory path
+    @callback(Array.<DirectoryEntry | FileEntry>) read directory successfully
+    @callback(FileError) read directory unsuccessfully
 ```
-参数|类型|说明
--------------|--------------|-------------
-filename|string|文件绝对路径名
-callback|Function|回传文件句柄fileEntry
+* .cd(dir, callback)
+```
+    Change current working directory
+    @param {string} dir, relative path for target directory
+    @callback(DirectoryEntry) target directory exists, and read successfully
+    @callback(FileError) target directory does not exist
+```
+* .md(dir, callback)
+```
+    Create a directory, the father directory of the new directory must exist
+    @param {string} dir, relative path for new directory
+    @callback(DirectoryEntry) create successfully
+    @callback(FileError) create unsuccessfully
+```
+* .rd(dir, callback)
+```
+    Remove an empty directory
+    @param {string} dir, relative path for the directory would be removed
+    @callback(undefined) remove successfully
+    @callback(FileError) remove unsuccessfully
+```
+* .deltree(dir, callback)
+```
+    Remove a normal directory
+    @param {string} dir, relative path for the directory would be removed
+    @callback(undefined) remove successfully
+    @callback(FileError) remove unsuccessfully
+```
 
-#### open，打开文件
-打开文件，如果不存在则抛错
-```javascript
-fs.open(filename, callback);
+#### File Operating APIs
+* .create(filename, callback)
 ```
-参数|类型|说明
--------------|--------------|-------------
-filename|string|文件绝对路径名
-callback|Function|回传文件句柄fileEntry
+    Create an empty file
+    @param {string} filename, file name including relative path
+    @callback(FileEntry) create new file successfully
+    @callback(FileError) create unsuccessfully
+```
+* .del(filename, callback)
+```
+    Delete a file
+    @param {string} filename, file name would be deleted including relative path
+    @callback(undefined) delete successfully
+    @callback(FileError) delete unsuccessfully 
+```
+* .open(filename, callback)
+```
+    Open a file
+    @param {string} filename, file name would be opened including relative path
+    @callback(FileEntry) open successfully
+    @callback(FileError) open unsuccessfully
+```
+* .read(filename, callback, param)
+```
+    Read a file
+    @param {string} filename, file name would be read including relative path
+    @param {?Object} param, reading config information
+    @param {?string} param.type, reading type, include 'readAsBinaryString', 'readAsText', 'readAsDataURL', 'readAsArrayBuffer'
+    @param {?string} param.encoding, charset for reading, for example 'uft8', 'gb2312'
+    @callback(ProgressEvent) read successfully
+    @callback(FileError) read unsuccessfully
+```
+* .write(filename, param, callback)
+```
+    Write content to file
+    @param {string} filename, file name including relative path
+    @param {Object} param, writing config information
+    @param {Blob} param.data, data to write
+    @param {?boolean} param.append, writing in an appending way or not, default value is false
+    @callback(ProgressEvent) write successfully
+    @callback(FileError) write unsuccessfully
+```
+#### Advanced Operating APIs
+* .ren(oldname, newname, callback)
+```
+    Rename directory or file
+    @param {string} oldname, directory or file would be renamed including relative path
+    @param {string} newname, new name excluding path
+    @callback(DirectoryEntry | FileEntry) rename successfully
+    @callback(FileError) rename unsuccessfully
+```
+* .move(source, dest, callback)
+```
+    Move directory or file to destination directory
+    @param {string} source, directory or file would be moved including relative path
+    @param {string} dest, destination directory including relative path
+    @callback(DirectoryEntry | FileEntry) move successfully
+    @callback(FileError) move unsuccessfully
+```
+* .copy(source, dest, callback)
+```
+    Copy directory or file to destination directory
+    @param {string} source, directory or file would be copied including relative path
+    @param {string} dest, destination directory including relative path
+    @callback(DirectoryEntry | FileEntry) copy successfully
+    @callback(FileError) copy unsuccessfully
+```
 
-#### del，删除文件
-删除文件，如果不存在则抛错
-```javascript
-fs.del(filename, callback);
+#### Other APIs
+* .getWorkingDirectory()
 ```
-参数|类型|说明
--------------|--------------|-------------
-filename|string|文件绝对路径名
-callback|Function|回传文件句柄fileEntry
-<hr>
-### 操作接口：
-#### copy，复制
-复制文件或目录到目标目录<br>
-（1）若源文件或目录不存在，则抛错；<br>
-（2）若目标目录不存在，则抛错；<br>
-（3）若源文件或目标移动违反树逻辑，如将父目录复制到子目录中，则抛错
-```javascript
-fs.copy(src, dest, callback);
+    Get current working directory
+    @return {DirectoryEntry} working directory
 ```
-参数|类型|说明
--------------|--------------|-------------
-src|string|源文件或源目录
-dest|string|目标目录
-callback|Function|回传目标目录句柄dirEntry
 
-#### move，移动
-移动文件或目录到目标目录<br>
-（1）若源文件或目录不存在，则抛错；<br>
-（2）若目标目录不存在，则抛错；<br>
-（3）若源文件或目标移动违反树逻辑，如将父目录移动到子目录中，则抛错
-```javascript
-fs.move(src, dest, callback);
-```
-参数|类型|说明
--------------|--------------|-------------
-src|string|源文件或源目录
-dest|string|目标目录
-callback|Function|回传目标目录句柄dirEntry
-
-#### ren，重命名
-重命名目录或文件夹
-```javascript
-fs.ren(oldname, newname, callback);
-```
-参数|类型|说明
--------------|--------------|-------------
-oldname|string|源文件名
-newname|string|新文件名，不必指定路径，路径指定错误会抛错
-callback|Function|回传文件句柄fileEntry
-
-#### read，读文件
-以指定方式、指定编码读取文件
-```javascript
-fs.read(src, option, callback);
-```
-参数|类型|说明
--------------|--------------|-------------
-src|string|文件名，不存在则抛错
-option|Object|读取配置对象
-option.type|string|读取方式：readAsBinaryString, readAsText, readAsDataURL, readAsArrayBuffer
-option.encoding|string|读取编码：utf8，gb2312，用于readAsText的第二个参数
-callback|Function|回传FileReader句柄
-
-#### write，写文件
-将Blob写入文件，不负责封装Blob对象实例<br>
-（1）若文件名不存在，则创建文件<br>
-（2）若以追加方式写，则在文件尾部追加<br>
-（3）若不以追加方式写，则清空文件，写入新数据<br>
-此API慎用，尤其是在非追加方式工作时，调用前请做好判断
-```javascript
-fs.write(src, option, callback);
-```
-参数|类型|说明
--------------|--------------|-------------
-src|string|文件名，不存在则抛错
-option|Object|读取配置对象
-option.data|Blob|Blob数据，严格限制类型，使用前请自行封装Blob数据
-option.append|boolean|是否以追加形式写文件
-callback|Function|回传FileWriter句柄
+##Author
+* email: lbxxlht@163.com
+* weibo: http://weibo.com/lbxx1984
+* blog: http://blog.csdn.net/lbxx1984

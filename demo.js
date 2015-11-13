@@ -15,9 +15,7 @@ var controller = {
     },
     cd: function () {
         var me = this;
-        me.fs.cd(get('cd'), function () {
-            me.fs.dir(listDirectory);
-        });
+        me.fs.cd(get('cd'), function () {me.fs.dir(listDirectory);});
     },
     md: function () {
         this.fs.md(get('md'), listAll);
@@ -36,6 +34,7 @@ var controller = {
     },
     open: function () {
         this.fs.open(get('open'), function (e) {
+            console.log(e);
             if (typeof e.getMetadata === 'function') {
                 var str = [
                     '<table><tr><td>fullPath</td><td>' + e.fullPath + '</td></tr>',
@@ -61,6 +60,7 @@ var controller = {
     read: function (file) {
         file = file || get('read');
         this.fs.read(file, function (e) {
+            console.log(e);
             if (e && e.target) {
                 log(e.target.result);
             }
@@ -77,7 +77,9 @@ var controller = {
     }
 };
 
-function listAll() {
+
+function listAll(e) {
+    console.log(e);
     var fs = controller.fs;
     var reading = ['/'];
     var result = {};
@@ -134,6 +136,7 @@ function listAll() {
 }
 
 function listDirectory(arr) {
+    console.log(arr);
     var str = ['<table>'];
     var path = controller.fs.getWorkingDirectory().fullPath;
     for (var i = 0; i < arr.length; i++) {
