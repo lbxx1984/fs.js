@@ -390,6 +390,8 @@
             fail();
         }
 
+        return this;
+
         // 回调处理事件
         function success(fs) {
             extend(me, fs);
