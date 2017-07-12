@@ -199,24 +199,17 @@
          * @return {Promise}
          */
         me.del = function (filename) {
-            callback = bind(this, callback);
-            fs.root.getFile(joinPath(currentDirectory.fullPath, filename), {create: false}, gotFile, callback);
-            function gotFile(fileEntry) {
-                fileEntry.remove(callback, callback);
-            }
+            return new Promise(function (resolve, reject) {
+                fs.root.getFile(
+                    joinPath(currentDirectory.fullPath, filename),
+                    {create: false},
+                    function (entry) {
+                        entry.remove(resolve, reject);
+                    },
+                    reject
+                );
+            });
         };
-
-        /**
-         * 打开文件
-         * 如果文件不存在则抛错
-         *
-         * @param {string} filename 完成文件名
-         * @param {Function} callback 回调函数
-         */
-        // me.open = function (filename, callback) {
-        //     callback = bind(this, callback);
-        //     fs.root.getFile(joinPath(currentDirectory.fullPath, filename), {create: false}, callback, callback);
-        // };
 
         /**
          * 复制
@@ -289,6 +282,17 @@
         //     }
         // };
 
+        /**
+         * 打开文件
+         * 如果文件不存在则抛错
+         *
+         * @param {string} filename 完成文件名
+         * @param {Function} callback 回调函数
+         */
+        // me.open = function (filename, callback) {
+        //     callback = bind(this, callback);
+        //     fs.root.getFile(joinPath(currentDirectory.fullPath, filename), {create: false}, callback, callback);
+        // };
 
         /**
          * 读取文件
