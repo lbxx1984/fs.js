@@ -9,30 +9,18 @@
 (function (namespace) {
 
 
+    var version = '0.0.2';
+
+
     if (typeof define === 'function') {
         define(function (require) {
             return FileSystem;
         });
     }
     else {
+        namespace = namespace || {};
         namespace.FileSystem = FileSystem;
-        namespace.fs = FileSystem;
-    }
-
-    var version = '0.0.1';
-
-    /**
-     * 内部工具，输出调试信息
-     *
-     * @param {string} str 要输出到控制台的信息
-     * @param {string} func 输出类型，即console对应的方法
-     */
-    function log(str, func) {
-        /* eslint-disable */
-        str = str || '';
-        func = typeof console[func] === 'function' ? func : 'log';
-        console[func](str);
-        /* eslint-enable */
+        namespace.fs = new FileSystem();
     }
 
 
@@ -74,22 +62,6 @@
 
 
     /**
-     * 内部工具，包装callback回调
-     *
-     * @param {Object} me fs对象实例
-     * @param {Function} callback 待封包的函数
-     * @return {Function} 封号包的函数
-     */
-    function bind(me, callback) {
-        callback = typeof callback === 'function' ? callback : function () {};
-        me = me || {};
-        return function () {
-            callback.apply(me, arguments);
-        };
-    }
-
-
-    /**
      * 内部工具，扩展fs对象实例API
      *
      * @param {Object} me fs对象实例
@@ -102,99 +74,131 @@
         me.version = version;
 
         /**
+         * 获取当前目录句柄
+         *
+         * @return {Object} 目录操作句柄
+         */
+        me.getCurrentDirectory = function () {
+            return currentDirectory;
+        };
+
+        /**
          * 读取当前目录
          *
-         * @param {Function} callback 回调函数
          * @param {?string} dir 相对路径
+         * @return {Promise}
          */
-        me.dir = function (callback, dir) {
-            callback = bind(this, callback);
-            fs.root.getDirectory(joinPath(currentDirectory.fullPath, dir), {}, gotDirectory, callback);
-            function gotDirectory(dirEntry) {
-                var reader = dirEntry.createReader();
-                reader.readEntries(callback, callback);
-            }
+        me.ls = me.dir = function (dir) {
+            return new Promise(function (resolve, reject) {
+                fs.root.getDirectory(
+                    joinPath(currentDirectory.fullPath, dir),
+                    {},
+                    function (dirEntry) {
+                        dirEntry.createReader().readEntries(resolve, reject);
+                    },
+                    reject
+                );
+            });
         };
 
         /**
          * 切换当前目录
          *
          * @param {string} dir 相对路径
-         * @param {Function} callback 回调函数
+         * @return {Promise}
          */
-        me.cd = function (dir, callback) {
-            callback = bind(this, callback);
-            fs.root.getDirectory(joinPath(currentDirectory.fullPath, dir), {}, gotDirectory, callback);
-            function gotDirectory(evt) {
-                currentDirectory = evt;
-                callback(evt);
-            }
+        me.cd = function (dir) {
+            return new Promise(function (resolve, reject) {
+                fs.root.getDirectory(
+                    joinPath(currentDirectory.fullPath, dir),
+                    {},
+                    function (entry) {
+                        currentDirectory = entry;
+                        resolve(entry);
+                    },
+                    reject
+                );
+            });
         };
 
         /**
          * 创建目录，不递归创建
          *
          * @param {string} dir 相对路径
-         * @param {Function} callback 回调函数，创建成功，回传dirEntry
+         * @return {Promise}
          */
-        me.md = function (dir, callback) {
-            callback = bind(this, callback);
-            fs.root.getDirectory(joinPath(currentDirectory.fullPath, dir), {create: true}, callback, callback);
+        me.md = function (dir) {
+            return new Promise(function (resolve, reject) {
+                fs.root.getDirectory(
+                    joinPath(currentDirectory.fullPath, dir),
+                    {create: true},
+                    resolve,
+                    reject
+                );
+            });
         };
 
         /**
-         * 删除目录
-         * 只删除空目录
+         * 删除目录，只删除空目录
          *
          * @param {string} dir 相对路径
-         * @param {Function} callback 回调
+         * @return {Promise}
          */
-        me.rd = function (dir, callback) {
-            callback = bind(this, callback);
-            fs.root.getDirectory(joinPath(currentDirectory.fullPath, dir), {}, gotDirectory, callback);
-            function gotDirectory(dirEntry) {
-                dirEntry.remove(callback, callback);
-            }
+        me.rd = function (dir) {
+            return new Promise(function (resolve, reject) {
+                fs.root.getDirectory(
+                    joinPath(currentDirectory.fullPath, dir),
+                    {},
+                    function (entry) {
+                        entry.remove(resolve, reject);
+                    },
+                    reject
+                );
+            });
         };
 
         /**
          * 删除目录及其内部所有内容
          *
          * @param {string} dir 相对路径
-         * @param {Function} callback 回调
+         * @return {Promise}
          */
-        me.deltree = function (dir, callback) {
-            callback = bind(this, callback);
-            fs.root.getDirectory(joinPath(currentDirectory.fullPath, dir), {}, gotDirectory, callback);
-            function gotDirectory(dirEntry) {
-                dirEntry.removeRecursively(callback, callback);
-            }
+        me.deltree = function (dir) {
+            return new Promise(function (resolve, reject) {
+                fs.root.getDirectory(
+                    joinPath(currentDirectory.fullPath, dir),
+                    {},
+                    function (entry) {
+                        entry.removeRecursively(resolve, reject);
+                    },
+                    reject
+                );
+            });
         };
 
         /**
-         * 创建文件
-         * 如果存在同名文件则抛错
+         * 创建文件，如果存在同名文件则抛错
          *
          * @param {string} filename 文件名（可含相对路径）
-         * @param {Function} callback 回调函数
+         * @return {Promise}
          */
-        me.create = function (filename, callback) {
-            callback = bind(this, callback);
-            fs.root.getFile(
-                joinPath(currentDirectory.fullPath, filename),
-                {create: true, exclusive: true},
-                callback, callback
-            );
+        me.create = function (filename) {
+            return new Promise(function (resolve, reject) {
+                fs.root.getFile(
+                    joinPath(currentDirectory.fullPath, filename),
+                    {create: true, exclusive: true},
+                    resolve, reject
+                );
+            });
         };
 
         /**
-         * 删除文件
-         * 如果文件不存在则抛错
+         * 删除文件，如果文件不存在则抛错
          *
          * @param {string} filename 完成文件名
-         * @param {Function} callback 回调函数
+         * @return {Promise}
          */
-        me.del = function (filename, callback) {
+        me.del = function (filename) {
             callback = bind(this, callback);
             fs.root.getFile(joinPath(currentDirectory.fullPath, filename), {create: false}, gotFile, callback);
             function gotFile(fileEntry) {
@@ -209,10 +213,10 @@
          * @param {string} filename 完成文件名
          * @param {Function} callback 回调函数
          */
-        me.open = function (filename, callback) {
-            callback = bind(this, callback);
-            fs.root.getFile(joinPath(currentDirectory.fullPath, filename), {create: false}, callback, callback);
-        };
+        // me.open = function (filename, callback) {
+        //     callback = bind(this, callback);
+        //     fs.root.getFile(joinPath(currentDirectory.fullPath, filename), {create: false}, callback, callback);
+        // };
 
         /**
          * 复制
@@ -222,21 +226,21 @@
          * @param {string} dest 相对目标目录
          * @param {Function} callback 回调函数
          */
-        me.copy = function (src, dest, callback) {
-            callback = bind(this, callback);
-            dest = joinPath(currentDirectory.fullPath, dest);
-            src = joinPath(currentDirectory.fullPath, src);
-            fs.root.getDirectory(dest, {}, gotDest, callback);
-            function gotDest(destEntry) {
-                fs.root.getFile(src, {create: false}, gotSrc, tryDirectory);
-                function gotSrc(srcEntry) {
-                    srcEntry.copyTo(destEntry, null, callback, callback);
-                }
-                function tryDirectory() {
-                    fs.root.getDirectory(src, {}, gotSrc, callback);
-                }
-            }
-        };
+        // me.copy = function (src, dest, callback) {
+        //     callback = bind(this, callback);
+        //     dest = joinPath(currentDirectory.fullPath, dest);
+        //     src = joinPath(currentDirectory.fullPath, src);
+        //     fs.root.getDirectory(dest, {}, gotDest, callback);
+        //     function gotDest(destEntry) {
+        //         fs.root.getFile(src, {create: false}, gotSrc, tryDirectory);
+        //         function gotSrc(srcEntry) {
+        //             srcEntry.copyTo(destEntry, null, callback, callback);
+        //         }
+        //         function tryDirectory() {
+        //             fs.root.getDirectory(src, {}, gotSrc, callback);
+        //         }
+        //     }
+        // };
 
         /**
          * 移动
@@ -246,21 +250,21 @@
          * @param {string} dest 相对目标目录
          * @param {Function} callback 回调函数
          */
-        me.move = function (src, dest, callback) {
-            callback = bind(this, callback);
-            dest = joinPath(currentDirectory.fullPath, dest);
-            src = joinPath(currentDirectory.fullPath, src);
-            fs.root.getDirectory(dest, {}, gotDest, callback);
-            function gotDest(destEntry) {
-                fs.root.getFile(src, {create: false}, gotSrc, tryDirectory);
-                function gotSrc(srcEntry) {
-                    srcEntry.moveTo(destEntry, null, callback, callback);
-                }
-                function tryDirectory() {
-                    fs.root.getDirectory(src, {}, gotSrc, callback);
-                }
-            }
-        };
+        // me.move = function (src, dest, callback) {
+        //     callback = bind(this, callback);
+        //     dest = joinPath(currentDirectory.fullPath, dest);
+        //     src = joinPath(currentDirectory.fullPath, src);
+        //     fs.root.getDirectory(dest, {}, gotDest, callback);
+        //     function gotDest(destEntry) {
+        //         fs.root.getFile(src, {create: false}, gotSrc, tryDirectory);
+        //         function gotSrc(srcEntry) {
+        //             srcEntry.moveTo(destEntry, null, callback, callback);
+        //         }
+        //         function tryDirectory() {
+        //             fs.root.getDirectory(src, {}, gotSrc, callback);
+        //         }
+        //     }
+        // };
 
 
         /**
@@ -271,19 +275,19 @@
          * @param {string} newname 新名
          * @param {Function} callback 回调函数
          */
-        me.ren = function (oldname, newname, callback) {
-            callback = bind(this, callback);
-            oldname = joinPath(currentDirectory.fullPath, oldname);
-            fs.root.getDirectory(oldname, {}, got, tryFile);
-            function got(entry) {
-                entry.getParent(function (parentEntry) {
-                    entry.moveTo(parentEntry, newname, callback, callback);
-                });
-            }
-            function tryFile() {
-                fs.root.getFile(oldname, {create: false}, got, callback);
-            }
-        };
+        // me.ren = function (oldname, newname, callback) {
+        //     callback = bind(this, callback);
+        //     oldname = joinPath(currentDirectory.fullPath, oldname);
+        //     fs.root.getDirectory(oldname, {}, got, tryFile);
+        //     function got(entry) {
+        //         entry.getParent(function (parentEntry) {
+        //             entry.moveTo(parentEntry, newname, callback, callback);
+        //         });
+        //     }
+        //     function tryFile() {
+        //         fs.root.getFile(oldname, {create: false}, got, callback);
+        //     }
+        // };
 
 
         /**
@@ -296,26 +300,26 @@
          * @param {?string} param.encoding 编码方式，type=readAsText时有效，默认utf8，
          *      在windows中文操作系统中读取本地文件时经常用gb2312
          */
-        me.read = function (src, callback, param) {
-            callback = bind(this, callback);
-            src = joinPath(currentDirectory.fullPath, src);
-            param = param || {};
-            param.type = param.type || 'readAsText';
-            param.encoding = param.encoding || 'utf8';
-            fs.root.getFile(src, {}, gotFile, callback);
-            function readFile(file) {
-                var reader = new FileReader();
-                reader.onloadend = function (e) {
-                    callback(e);
-                };
-                if (typeof reader[param.type] === 'function') {
-                    reader[param.type](file, param.encoding);
-                }
-            }
-            function gotFile(fileEntry) {
-                fileEntry.file(readFile, callback);
-            }
-        };
+        // me.read = function (src, callback, param) {
+        //     callback = bind(this, callback);
+        //     src = joinPath(currentDirectory.fullPath, src);
+        //     param = param || {};
+        //     param.type = param.type || 'readAsText';
+        //     param.encoding = param.encoding || 'utf8';
+        //     fs.root.getFile(src, {}, gotFile, callback);
+        //     function readFile(file) {
+        //         var reader = new FileReader();
+        //         reader.onloadend = function (e) {
+        //             callback(e);
+        //         };
+        //         if (typeof reader[param.type] === 'function') {
+        //             reader[param.type](file, param.encoding);
+        //         }
+        //     }
+        //     function gotFile(fileEntry) {
+        //         fileEntry.file(readFile, callback);
+        //     }
+        // };
 
         /**
          * 写文件
@@ -327,39 +331,31 @@
          * @param {?boolean} param.append 是否以追加形式写入
          * @param {Function} callback 回调函数
          */
-        me.write = function (src, param, callback) {
-            callback = bind(this, callback);
-            src = joinPath(currentDirectory.fullPath, src);
-            param = param || {};
-            param.data = param.data instanceof Blob ? param.data : new Blob(['']);
-            param.append = param.hasOwnProperty('append') ? param.append : false;
-            fs.root.getFile(src, {create: true}, (param.append ? gotFile : deleteFile), callback);
-            function gotFile(fileEntry) {
-                fileEntry.createWriter(gotWriter);
-            }
-            function deleteFile(fileEntry) {
-                fileEntry.remove(createFile, callback);
-            }
-            function createFile() {
-                fs.root.getFile(src, {create: true}, gotFile, callback);
-            }
-            function gotWriter(fileWriter) {
-                fileWriter.seek(fileWriter.length);
-                fileWriter.onwriteend = function (e) {
-                    callback(e);
-                };
-                fileWriter.write(param.data);
-            }
-        };
+        // me.write = function (src, param, callback) {
+        //     callback = bind(this, callback);
+        //     src = joinPath(currentDirectory.fullPath, src);
+        //     param = param || {};
+        //     param.data = param.data instanceof Blob ? param.data : new Blob(['']);
+        //     param.append = param.hasOwnProperty('append') ? param.append : false;
+        //     fs.root.getFile(src, {create: true}, (param.append ? gotFile : deleteFile), callback);
+        //     function gotFile(fileEntry) {
+        //         fileEntry.createWriter(gotWriter);
+        //     }
+        //     function deleteFile(fileEntry) {
+        //         fileEntry.remove(createFile, callback);
+        //     }
+        //     function createFile() {
+        //         fs.root.getFile(src, {create: true}, gotFile, callback);
+        //     }
+        //     function gotWriter(fileWriter) {
+        //         fileWriter.seek(fileWriter.length);
+        //         fileWriter.onwriteend = function (e) {
+        //             callback(e);
+        //         };
+        //         fileWriter.write(param.data);
+        //     }
+        // };
 
-        /**
-         * 获取当前目录句柄
-         *
-         * @param {Object} 目录操作句柄
-         */
-        me.getWorkingDirectory = function () {
-            return currentDirectory;
-        };
     }
 
 
@@ -374,7 +370,7 @@
     function FileSystem(callback, param) {
 
         if (!(this instanceof FileSystem)) {
-            return new FileSystem(param, callback);
+            return new FileSystem(callback, param);
         }
         callback = typeof callback === 'function' ? callback : function () {};
         param = param || {};
@@ -383,7 +379,7 @@
         var me = this;
 
         // 分配空间，申请文件操作句柄
-        if (typeof malloc === 'function') {
+        if (typeof malloc === 'function' && typeof window.Promise === 'function') {
             malloc(window.TEMPORARY, size, success, fail);
         }
         else {
@@ -398,10 +394,18 @@
             log('FileSystem ' + me.version);
             callback(me);
         }
+
         function fail() {
             log('Your browser don\'t support!', 'warn');
             callback();
         }
+
+        function log(str, func) {
+            str = str || '';
+            func = typeof console[func] === 'function' ? func : 'log';
+            console[func](str);
+        }
+
     }
 
 

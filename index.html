@@ -6,74 +6,9 @@
 <meta http-equiv="cache-control" content="no-store, no-cache, must-revalidate, pre-check=0, post-check=0" />
 <meta http-equiv="expires" content="0" />
 <title>FileSystem Demo</title>
-<style type="text/css">
-    body {
-        padding: 10px;
-        margin: 0px;
-    }
-    #screen {
-        position: fixed;
-        left: 10px;
-        top: 10px;
-        right: 300px;
-        bottom: 0px;
-        border-right: 1px solid #000;
-        line-height: 25px;
-    }
-    #ctrl {
-        float: right;
-        width: 290px;
-        line-height: 25px;
-    }
-    #ctrl [type="button"] {
-        min-width: 60px;
-    }
-    #copy1, #copy2, #move1, #move2, #ren1, #ren2 {
-        width: 78px;
-    }
-    #write {
-        width: 95px;
-    }
-    textarea {
-        width: 270px;
-        height: 200px;
-        margin-top: 10px;
-        margin-left: 10px;
-    }
-    input {
-        margin-left: 10px;
-    }
-    tr td:nth-child(1) {
-        width: 60px;
-    }
-    hr {
-        border-top: 1px solid #000;
-        border-bottom: none;
-    }
-</style>
-<script type="text/javascript" src="./FileSystem.js"></script>
+<script type="text/javascript" src="./filesystem.js"></script>
 <script type="text/javascript" src="./demo.js"></script>
 </head>
-<body>
-    <div id="screen"></div>
-    <div id="ctrl">
-        <br><hr>
-        <input type="button" value="version" data-cmd="version"/><hr>
-        <input type="button" value="dir"/><hr>
-        <input type="text" id="cd" value="/"/><input type="button" value="cd"/><hr>
-        <input type="text" id="md" value="test directory"/><input type="button" value="md"/><hr>
-        <input type="text" id="rd"/><input type="button" value="rd"/><hr>
-        <input type="text" id="deltree"/><input type="button" value="deltree"/><hr>
-        <input type="text" id="create"/><input type="button" value="create"/><hr>
-        <input type="text" id="del"/><input type="button" value="del"/><hr>
-        <input type="text" id="open"/><input type="button" value="open"/><hr>
-        <input type="text" id="copy1"/><input type="text" id="copy2"><input type="button" value="copy"/><hr>
-        <input type="text" id="move1"/><input type="text" id="move2"><input type="button" value="move"/><hr>
-        <input type="text" id="ren1"/><input type="text" id="ren2"><input type="button" value="ren"/><hr>
-        <input type="text" id="read"/><input type="button" value="read"/><hr>
-        <input type="checkbox" id="append" checked>append<input type="text" id="write"/><input type="button" value="write"/>
-        <textarea id="content"></textarea>
-        <hr>
-    </div>
+<body style="background-color:#000;color:#FFF;">
 </body>
 </html>
