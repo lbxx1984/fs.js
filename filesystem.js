@@ -212,153 +212,161 @@
         };
 
         /**
-         * 复制
          * 复制文件或目录到指定目录
          *
          * @param {string} src 源相对路径
          * @param {string} dest 相对目标目录
-         * @param {Function} callback 回调函数
+         * @return {Promise}
          */
-        // me.copy = function (src, dest, callback) {
-        //     callback = bind(this, callback);
-        //     dest = joinPath(currentDirectory.fullPath, dest);
-        //     src = joinPath(currentDirectory.fullPath, src);
-        //     fs.root.getDirectory(dest, {}, gotDest, callback);
-        //     function gotDest(destEntry) {
-        //         fs.root.getFile(src, {create: false}, gotSrc, tryDirectory);
-        //         function gotSrc(srcEntry) {
-        //             srcEntry.copyTo(destEntry, null, callback, callback);
-        //         }
-        //         function tryDirectory() {
-        //             fs.root.getDirectory(src, {}, gotSrc, callback);
-        //         }
-        //     }
-        // };
+        me.copy = function (src, dest) {
+            dest = joinPath(currentDirectory.fullPath, dest);
+            src = joinPath(currentDirectory.fullPath, src);
+            return new Promise(function (resolve, reject) {
+                fs.root.getDirectory(dest, {}, gotDest, reject);
+                function gotDest(destEntry) {
+                    fs.root.getFile(src, {create: false}, gotSrc, tryDirectory);
+                    function gotSrc(srcEntry) {
+                        srcEntry.copyTo(destEntry, null, resolve, reject);
+                    }
+                    function tryDirectory() {
+                        fs.root.getDirectory(src, {}, gotSrc, reject);
+                    }
+                }
+            });
+        };
 
         /**
-         * 移动
          * 移动文件或目录到指定目录
          *
          * @param {string} src 源相对路径
          * @param {string} dest 相对目标目录
-         * @param {Function} callback 回调函数
+         * @return {Promise}
          */
-        // me.move = function (src, dest, callback) {
-        //     callback = bind(this, callback);
-        //     dest = joinPath(currentDirectory.fullPath, dest);
-        //     src = joinPath(currentDirectory.fullPath, src);
-        //     fs.root.getDirectory(dest, {}, gotDest, callback);
-        //     function gotDest(destEntry) {
-        //         fs.root.getFile(src, {create: false}, gotSrc, tryDirectory);
-        //         function gotSrc(srcEntry) {
-        //             srcEntry.moveTo(destEntry, null, callback, callback);
-        //         }
-        //         function tryDirectory() {
-        //             fs.root.getDirectory(src, {}, gotSrc, callback);
-        //         }
-        //     }
-        // };
-
+        me.move = function (src, dest) {
+            dest = joinPath(currentDirectory.fullPath, dest);
+            src = joinPath(currentDirectory.fullPath, src);
+            return new Promise(function (resolve, reject) {
+                fs.root.getDirectory(dest, {}, gotDest, reject);
+                function gotDest(destEntry) {
+                    fs.root.getFile(src, {create: false}, gotSrc, tryDirectory);
+                    function gotSrc(srcEntry) {
+                        srcEntry.moveTo(destEntry, null, resolve, reject);
+                    }
+                    function tryDirectory() {
+                        fs.root.getDirectory(src, {}, gotSrc, reject);
+                    }
+                }
+            });
+        };
 
         /**
-         * 重命名
          * 重命名文件夹或文件
          *
          * @param {string} oldname 源文件或目录的相对路径
          * @param {string} newname 新名
-         * @param {Function} callback 回调函数
+         * @return {Promise}
          */
-        // me.ren = function (oldname, newname, callback) {
-        //     callback = bind(this, callback);
-        //     oldname = joinPath(currentDirectory.fullPath, oldname);
-        //     fs.root.getDirectory(oldname, {}, got, tryFile);
-        //     function got(entry) {
-        //         entry.getParent(function (parentEntry) {
-        //             entry.moveTo(parentEntry, newname, callback, callback);
-        //         });
-        //     }
-        //     function tryFile() {
-        //         fs.root.getFile(oldname, {create: false}, got, callback);
-        //     }
-        // };
+        me.ren = function (oldname, newname) {
+            oldname = joinPath(currentDirectory.fullPath, oldname);
+            return new Promise(function (resolve, reject) {
+                fs.root.getDirectory(oldname, {}, got, tryFile);
+                function got(entry) {
+                    entry.getParent(function (parentEntry) {
+                        entry.moveTo(parentEntry, newname, resolve, reject);
+                    });
+                }
+                function tryFile() {
+                    fs.root.getFile(oldname, {create: false}, got, reject);
+                }
+            });
+        };
 
         /**
-         * 打开文件
-         * 如果文件不存在则抛错
+         * 打开文件，如果文件不存在则抛错
          *
          * @param {string} filename 完成文件名
-         * @param {Function} callback 回调函数
+         * @return {Promise}
          */
-        // me.open = function (filename, callback) {
-        //     callback = bind(this, callback);
-        //     fs.root.getFile(joinPath(currentDirectory.fullPath, filename), {create: false}, callback, callback);
-        // };
+        me.open = function (filename) {
+            return new Promise(function (resolve, reject) {
+                fs.root.getFile(
+                    joinPath(currentDirectory.fullPath, filename),
+                    {create: false},
+                    resolve,
+                    reject
+                );
+            });
+        };
 
         /**
          * 读取文件
          *
          * @param {string} src 文件路径，若不存在抛错
-         * @param {Function} callback 回调函数
          * @param {?Object} param 读取配置
          * @param {?string} param.type 读取方式: readAsBinaryString, readAsText, readAsDataURL, readAsArrayBuffer
-         * @param {?string} param.encoding 编码方式，type=readAsText时有效，默认utf8，
-         *      在windows中文操作系统中读取本地文件时经常用gb2312
+         * @param {?string} param.encoding 编码方式，type=readAsText时有效，默认utf8，在windows中文操作系统中读取本地文件时经常用gb2312
+         * @return {Promise}
          */
-        // me.read = function (src, callback, param) {
-        //     callback = bind(this, callback);
-        //     src = joinPath(currentDirectory.fullPath, src);
-        //     param = param || {};
-        //     param.type = param.type || 'readAsText';
-        //     param.encoding = param.encoding || 'utf8';
-        //     fs.root.getFile(src, {}, gotFile, callback);
-        //     function readFile(file) {
-        //         var reader = new FileReader();
-        //         reader.onloadend = function (e) {
-        //             callback(e);
-        //         };
-        //         if (typeof reader[param.type] === 'function') {
-        //             reader[param.type](file, param.encoding);
-        //         }
-        //     }
-        //     function gotFile(fileEntry) {
-        //         fileEntry.file(readFile, callback);
-        //     }
-        // };
+        me.read = function (src, param) {
+            src = joinPath(currentDirectory.fullPath, src);
+            param = param || {};
+            param.type = param.type || 'readAsText';
+            param.encoding = param.encoding || 'utf8';
+            return new Promise(function (resolve, reject) {
+                fs.root.getFile(src, {}, gotFile, reject);
+                function readFile(file) {
+                    var reader = new FileReader();
+                    reader.onloadend = resolve;
+                    if (typeof reader[param.type] === 'function') {
+                        reader[param.type](file, param.encoding);
+                    }
+                }
+                function gotFile(fileEntry) {
+                    fileEntry.file(readFile, reject);
+                }
+            });
+        };
 
         /**
-         * 写文件
-         * 文件不存在，则创建；不指定append，则清空文件从头写入，否则追加写入
+         * 写文件，文件不存在，则创建；不指定append，则清空文件从头写入，否则追加写入
          *
-         * @param {string} src 文件路径，若不存在抛错
+         * @param {string} src 文件路径
          * @param {Object} param 写入配置
-         * @param {Blob} param.data 待写入的数据，以封装好的blob
-         * @param {?boolean} param.append 是否以追加形式写入
-         * @param {Function} callback 回调函数
+         * @param {Blob|string} param.data 待写入的数据，以封装好的blob
+         * @param {boolean} param.append 是否以追加形式写入
+         * @return {Promise}
          */
-        // me.write = function (src, param, callback) {
-        //     callback = bind(this, callback);
-        //     src = joinPath(currentDirectory.fullPath, src);
-        //     param = param || {};
-        //     param.data = param.data instanceof Blob ? param.data : new Blob(['']);
-        //     param.append = param.hasOwnProperty('append') ? param.append : false;
-        //     fs.root.getFile(src, {create: true}, (param.append ? gotFile : deleteFile), callback);
-        //     function gotFile(fileEntry) {
-        //         fileEntry.createWriter(gotWriter);
-        //     }
-        //     function deleteFile(fileEntry) {
-        //         fileEntry.remove(createFile, callback);
-        //     }
-        //     function createFile() {
-        //         fs.root.getFile(src, {create: true}, gotFile, callback);
-        //     }
-        //     function gotWriter(fileWriter) {
-        //         fileWriter.seek(fileWriter.length);
-        //         fileWriter.onwriteend = function (e) {
-        //             callback(e);
-        //         };
-        //         fileWriter.write(param.data);
-        //     }
-        // };
+        me.write = function (src, param) {
+            src = joinPath(currentDirectory.fullPath, src);
+            param = param || {};
+            param.data = typeof param.data === 'string' ? new Blob([param.data]) : param.data;
+            param.data = param.data instanceof Blob ? param.data : new Blob(['']);
+            param.append = param.hasOwnProperty('append') ? param.append : false;
+            return new Promise(function (resolve, reject) {
+                fs.root.getFile(src, {create: true}, gotFile, reject);
+                function gotFile(fileEntry) {
+                    fileEntry.createWriter(gotWriter);
+                }
+                function gotWriter(fileWriter) {
+                    var truncate = false;
+                    fileWriter.onwriteend = function () {
+                        if (truncate) {
+                            resolve();
+                            return;
+                        }
+                        if (param.append) {
+                            resolve();
+                        }
+                        else {
+                            fileWriter.truncate(param.data.size);
+                            truncate = true;
+                        }
+                    };
+                    fileWriter.seek(param.append ? fileWriter.length : 0);
+                    fileWriter.write(param.data);
+                }
+            });
+        };
 
     }
 
@@ -409,7 +417,6 @@
             func = typeof console[func] === 'function' ? func : 'log';
             console[func](str);
         }
-
     }
 
 
